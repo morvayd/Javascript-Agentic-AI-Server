@@ -1,0 +1,24 @@
+{
+  "name": "agent-backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "stop": "node -e \"const { execSync } = require('child_process'); const port = process.env.PORT || 3000; const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms)); const check = () => { try { return execSync('lsof -nP -iTCP:' + port + ' -sTCP:LISTEN -t 2>/dev/null || true', { stdio: ['pipe', 'pipe', 'pipe'] }).toString().trim(); } catch { return ''; } }; (async () => { const initial = check(); if (!initial) { console.log('No process is listening on port ' + port + '.'); return; } const pids = [...new Set(initial.split(/\\s+/).filter(Boolean))]; console.log('Stopping process(es) on port ' + port + ': ' + pids.join(', ')); for (const pid of pids) { try { execSync('kill -TERM ' + pid + ' 2>/dev/null || true'); } catch {} } for (let i = 0; i < 20; i++) { const remaining = check(); if (!remaining) { console.log('Port ' + port + ' is free.'); return; } await sleep(250); } console.log('Graceful shutdown timed out. Forcing kill on port ' + port + '...'); for (const pid of [...new Set(check().split(/\\s+/).filter(Boolean))]) { try { execSync('kill -KILL ' + pid + ' 2>/dev/null || true'); } catch {} } for (let i = 0; i < 20; i++) { if (!check()) { console.log('Port ' + port + ' is free after forced shutdown.'); return; } await sleep(250); } console.error('Port ' + port + ' is still in use after forced shutdown.'); process.exit(1); })().catch((error) => { console.error('Could not stop port ' + port + ':', error.message); process.exit(1); });\"",
+    "restart": "npm run stop && npm start",
+    "check": "node --check server.js && node --check tools.js",
+    "test": "npm run check"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "duckduckgo-search": "^1.0.7",
+    "express": "^5.2.1",
+    "openai": "^7.23.0",
+    "yahoo-finance2": "^4.0.2"
+  }
+}
